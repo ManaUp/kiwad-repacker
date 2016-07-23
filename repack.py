@@ -108,8 +108,10 @@ for e in entries:
     out.write(e["name"].encode())
     writeByte(out, 0)
     offset += netSize
-    print("> Wrote ENTRY for %s" % e["name"])
+    if args.verbose:
+        print("> Wrote ENTRY for %s" % e["name"])
 # Write file DATA
 for e in entries:
     out.write(e["compressedContents"] if e["isCompressed"] else e["contents"])
-    print("> Wrote DATA for %s" % e["name"])
+    if args.verbose:
+        print("> Wrote DATA for %s" % e["name"])
