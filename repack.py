@@ -3,6 +3,7 @@
 import argparse
 import io
 import pathlib
+import re
 import zlib
 
 # The MIT License (MIT)
@@ -35,6 +36,8 @@ parser.add_argument('sourcePath', type=str,
     help='the root directory of the files to be archived')
 parser.add_argument('archivePath', type=str,
     help='the path of the archive file to be made')
+parser.add_argument('blacklist', type=str, nargs='?', default='',
+    help='a file containing patterns to avoid compressing')
 parser.add_argument('--verbose', '-v', type=bool,
     help='if enabled, use diagnostics')
 
@@ -44,6 +47,12 @@ args = parser.parse_args()
 
 root = pathlib.Path(args.sourcePath)
 files = root.glob("**/*");
+blacklist = set()
+if args.blacklist != '':
+    blacklistPatterns = re.split('\s', open(args.blacklist).read(-1))
+    for p in blacklistPatterns:
+        if p != '':
+            blacklist.update(set(root.glob(p)))
 entries = []
 offset = 14 # Precalculate offset of data section in loop below
 
@@ -57,11 +66,10 @@ for f in files:
             uSize = len(contents)
             zSize = len(compressedContents)
             name = str(f.relative_to(root))
-            isCompressed = zSize < uSize
+            isCompressed = zSize < uSize and not f in blacklist
             crc = zlib.crc32(contents)
             entry = {
-                "contents": contents,
-                "compressedContents": compressedContents,
+                "contents": compressedContents if isCompressed else contents,
                 "uSize": uSize,
                 "zSize": zSize,
                 "name": name,
@@ -112,6 +120,6 @@ for e in entries:
         print("> Wrote ENTRY for %s" % e["name"])
 # Write file DATA
 for e in entries:
-    out.write(e["compressedContents"] if e["isCompressed"] else e["contents"])
+    out.write(e["contents"])
     if args.verbose:
         print("> Wrote DATA for %s" % e["name"])
