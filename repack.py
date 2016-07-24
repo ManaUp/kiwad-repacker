@@ -62,14 +62,17 @@ for f in files:
     if f.is_file():
         with f.open(mode="rb") as h:
             contents = h.read(-1)
-            compressedContents = zlib.compress(contents)
+            isCompressed = not f in blacklist
+            zSize = 0xFFFFFFFF
             uSize = len(contents)
-            zSize = len(compressedContents)
+            if isCompressed:
+                contents = zlib.compress(contents)
+                zSize = len(contents)
+                isCompressed = zSize < uSize
             name = str(f.relative_to(root))
-            isCompressed = zSize < uSize and not f in blacklist
             crc = zlib.crc32(contents)
             entry = {
-                "contents": compressedContents if isCompressed else contents,
+                "contents": contents,
                 "uSize": uSize,
                 "zSize": zSize,
                 "name": name,
