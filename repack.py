@@ -66,13 +66,13 @@ for f in files:
             zSize = 0xFFFFFFFF
             uSize = len(contents)
             if isCompressed:
-                contents = zlib.compress(contents)
-                zSize = len(contents)
+                compressedContents = zlib.compress(contents)
+                zSize = len(compressedContents)
                 isCompressed = zSize < uSize
             name = str(f.relative_to(root))
             crc = zlib.crc32(contents)
             entry = {
-                "contents": contents,
+                "contents": compressedContents if isCompressed else contents,
                 "uSize": uSize,
                 "zSize": zSize,
                 "name": name,
