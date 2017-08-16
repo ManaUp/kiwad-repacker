@@ -70,6 +70,7 @@ for f in files:
                 zSize = len(compressedContents)
                 isCompressed = zSize < uSize
             name = str(f.relative_to(root))
+            name = name.replace("\\", "/")
             crc = zlib.crc32(contents)
             entry = {
                 "contents": compressedContents if isCompressed else contents,
